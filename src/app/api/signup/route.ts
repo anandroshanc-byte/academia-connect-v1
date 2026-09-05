@@ -4,6 +4,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 
+export const dynamic = 'force-dynamic';
+
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().email().transform((v) => v.toLowerCase().trim()),

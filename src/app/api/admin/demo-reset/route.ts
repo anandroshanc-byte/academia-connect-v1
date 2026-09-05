@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createCanonicalDemoData } from "@/lib/demoSeed";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(){
   const session=await getServerSession(authOptions);
   if(!session?.user || (session.user as any).role!=="ADMIN") return NextResponse.json({error:"Forbidden"},{status:403});

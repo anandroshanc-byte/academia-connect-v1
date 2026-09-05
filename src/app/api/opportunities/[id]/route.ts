@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, requireVerifiedRole } from "@/lib/session";
 import { scoreStudentForOpportunity } from "@/lib/matching/adapter";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });

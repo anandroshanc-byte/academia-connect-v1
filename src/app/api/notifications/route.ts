@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
+export const dynamic = 'force-dynamic';
+
 const patchSchema = z.object({
   id: z.string().min(1).optional(),
   all: z.boolean().optional(),

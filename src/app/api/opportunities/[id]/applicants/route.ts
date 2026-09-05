@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireVerifiedRole } from "@/lib/session";
 import { rankApplicantsForOpportunity } from "@/lib/matching/adapter";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   let user;
   try {

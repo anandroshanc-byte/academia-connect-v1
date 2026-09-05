@@ -6,6 +6,8 @@ import { rankOpportunitiesForStudent } from "@/lib/matching/adapter";
 import { rateLimit } from "@/lib/rateLimit";
 import { createNotification } from "@/lib/notifications";
 
+export const dynamic = 'force-dynamic';
+
 const skillReqSchema = z.object({
   skillId: z.string().min(1),
   requiredProficiency: z.number().int().min(1).max(4),

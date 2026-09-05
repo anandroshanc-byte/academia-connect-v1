@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireVerifiedRole } from "@/lib/session";
 import { createNotification } from "@/lib/notifications";
 
+export const dynamic = 'force-dynamic';
+
 const schema = z.object({
   skillId: z.string().min(1),
 });

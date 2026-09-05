@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 
+export const dynamic = 'force-dynamic';
+
 const skillSchema = z.object({ skillId: z.string().min(1).max(100), proficiency: z.number().int().min(1).max(4) });
 const urlOrEmpty = z.string().url().max(500).optional().nullable().or(z.literal(""));
 const updateSchema = z.object({
