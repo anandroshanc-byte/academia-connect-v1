@@ -1,0 +1,229 @@
+// Academia Connect database schema. SQLite keeps the prototype zero-setup.
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String
+  isDemo    Boolean  @default(false)
+  emailVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentProfile      StudentProfile?
+  companyProfile      CompanyProfile?
+  institutionProfile  InstitutionProfile?
+  academicianProfile  AcademicianProfile?
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+}
+
+model StudentProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  degreeType      String
+  specialization  String
+  degree          String
+  year            Int
+  cgpa            Float?
+  location        String?
+  institutionName String?
+  profilePhotoUrl String?
+  institutionId   String?
+  institution     InstitutionProfile? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  bio             String?
+  githubUrl       String?
+  linkedinUrl     String?
+  portfolioUrl    String?
+  resumeUrl       String?
+  discoverability String @default("MATCHED_ONLY") // PRIVATE | MATCHED_ONLY | APPLIED_ONLY | PUBLIC
+
+  careerInterests    String @default("[]")
+  projectSkillIds    String @default("[]")
+  experienceSkillIds String @default("[]")
+  projectsJson       String @default("[]")
+  certificationsJson String @default("[]")
+  achievementsJson   String @default("[]")
+
+  skills       StudentSkill[]
+  applications Application[]
+  assessmentAttempts AssessmentAttempt[]
+  feedbackReceived Feedback[] @relation("StudentFeedback")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([institutionId])
+}
+
+model StudentSkill {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skillId      String
+  proficiency  Int
+  verification Int @default(1)
+  @@unique([studentId, skillId])
+  @@index([skillId])
+}
+
+model CompanyProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  description String?
+  profilePhotoUrl String?
+  website String?
+  registrationId String?
+  verificationDocumentUrl String?
+  verificationStatus String @default("PENDING") // PENDING | VERIFIED | REJECTED
+  opportunities Opportunity[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InstitutionProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institutionName String
+  officialWebsite String?
+  profilePhotoUrl String?
+  institutionalId String?
+  verificationDocumentUrl String?
+  verificationStatus String @default("PENDING")
+  students StudentProfile[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AcademicianProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institutionName String?
+  profilePhotoUrl String?
+  institutionId String?
+  verificationStatus String @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Opportunity {
+  id        String         @id @default(cuid())
+  companyId String
+  company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title        String
+  role         String
+  type         String @default("INTERNSHIP")
+  description  String?
+  careerPathId String?
+  degrees       String?
+  minYear       Int?
+  maxYear       Int?
+  minCgpa       Float?
+  location      String?
+  remoteAllowed Boolean @default(false)
+  duration      String?
+  stipend      String?
+  deadline     DateTime?
+  status String @default("open")
+  approvalStatus String @default("PENDING") // PENDING | APPROVED | REJECTED
+  skillRequirements SkillRequirement[]
+  applications       Application[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([companyId, status, approvalStatus])
+  @@index([deadline])
+}
+
+model SkillRequirement {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  skillId             String
+  requiredProficiency Int
+  weight              Int
+  type                String
+  @@index([skillId])
+}
+
+model Application {
+  id            String         @id @default(cuid())
+  studentId     String
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  opportunityId String
+  opportunity   Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  status String @default("applied")
+  score  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([studentId, opportunityId])
+  @@index([opportunityId, status])
+  @@index([studentId, status])
+}
+
+model AssessmentAttempt {
+  id String @id @default(cuid())
+  studentId String
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessmentType String
+  score Int
+  answersJson String
+  createdAt DateTime @default(now())
+  @@index([studentId, assessmentType])
+}
+
+model Feedback {
+  id String @id @default(cuid())
+  studentId String
+  student StudentProfile @relation("StudentFeedback", fields: [studentId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  rating Int?
+  technicalScore Int?
+  communicationScore Int?
+  teamworkScore Int?
+  problemSolvingScore Int?
+  comments String?
+  source String // INDUSTRY | STUDENT | INSTITUTION
+  createdAt DateTime @default(now())
+  @@index([studentId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action String
+  resourceType String?
+  resourceId String?
+  metadataJson String?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}

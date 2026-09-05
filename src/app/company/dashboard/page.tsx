@@ -1,0 +1,26 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { Alert, Box, Button, Card, CardActionArea, CardContent, Chip, CircularProgress, Container, Grid, LinearProgress, Paper, Stack, Typography } from "@mui/material";
+import AddBusinessIcon from "@mui/icons-material/AddBusiness";
+import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
+
+export default function CompanyDashboard() {
+  const { status } = useSession({ required: true });
+  const [opportunities, setOpportunities] = useState<any[] | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => { if (status !== "authenticated") return; fetch("/api/opportunities", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error("Could not load company opportunities."); return r.json(); }).then(setOpportunities).catch((e) => setError(e.message)); }, [status]);
+  if (status === "loading" || !opportunities) return <Container maxWidth="lg" sx={{ py: 6 }}><CircularProgress /></Container>;
+  if (error) return <Container maxWidth="md" sx={{ py: 6 }}><Alert severity="error">{error}</Alert></Container>;
+  const applicants = opportunities.reduce((count, opportunity) => count + (opportunity._count?.applications || 0), 0);
+  const pending = opportunities.filter((opportunity) => opportunity.approvalStatus === "PENDING").length;
+  return <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
+    <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: "primary.dark", color: "primary.contrastText", borderRadius: 3 }}><Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" spacing={3} alignItems={{ md: "center" }}><Box><Typography variant="overline" sx={{ color: "rgba(255,255,255,.68)" }}>Industry talent intelligence</Typography><Typography variant="h1" sx={{ mt: 1, color: "inherit" }}>Build your candidate pipeline.</Typography><Typography sx={{ mt: 2, color: "rgba(255,255,255,.72)", maxWidth: 700 }}>Define the capability you need, then review evidence-backed students through transparent matching.</Typography></Box><Button component={Link} href="/company/opportunities/new" variant="contained" color="secondary" startIcon={<AddBusinessIcon />}>Post opportunity</Button></Stack></Paper>
+    <Grid container spacing={2} sx={{ mt: 2 }}><Metric value={opportunities.length} label="Active postings" icon={<AddBusinessIcon />} /><Metric value={applicants} label="Applicants in pipeline" icon={<PeopleAltOutlinedIcon />} /><Metric value={pending} label="Awaiting approval" icon={<VerifiedOutlinedIcon />} /></Grid>
+    <Grid container spacing={2} sx={{ mt: 3 }}><Grid item xs={12} md={7}><Paper sx={{ p: { xs: 2, md: 3 } }}><Stack direction="row" justifyContent="space-between" alignItems="center"><Box><Typography variant="overline" color="primary">Opportunity management</Typography><Typography variant="h2" sx={{ mt: .5 }}>Your postings</Typography></Box><Button component={Link} href="/company/opportunities" size="small">View all</Button></Stack><Stack spacing={1.5} sx={{ mt: 2 }}>{opportunities.length === 0 ? <Typography color="text.secondary" sx={{ py: 4 }}>No postings yet.</Typography> : opportunities.map((opportunity) => <Card key={opportunity.id} variant="outlined"><CardActionArea component={Link} href={`/company/opportunities/${opportunity.id}`}><CardContent><Stack direction="row" justifyContent="space-between" spacing={2}><Box><Chip size="small" color="info" label={String(opportunity.type || "Opportunity").replaceAll("_", " ")} /><Typography variant="h4" sx={{ mt: 1 }}>{opportunity.title}</Typography><Typography variant="body2" color="text.secondary">{opportunity.role} · {opportunity._count?.applications || 0} applicants</Typography></Box><Chip size="small" label={opportunity.approvalStatus} color={opportunity.approvalStatus === "APPROVED" ? "success" : "warning"} /></Stack></CardContent></CardActionArea></Card>)}</Stack></Paper></Grid><Grid item xs={12} md={5}><Paper sx={{ p: { xs: 2, md: 3 }, height: "100%" }}><Typography variant="overline" color="primary">Pipeline health</Typography><Typography variant="h2" sx={{ mt: .5 }}>Candidate readiness</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Use the Talent workspace to compare capability evidence, missing requirements and application status.</Typography><LinearProgress variant="determinate" value={72} sx={{ mt: 4 }} /><Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}><Typography variant="caption" color="text.secondary">Explainable match coverage</Typography><Typography variant="caption" fontWeight={800}>72%</Typography></Stack><Button component={Link} href="/company/talent" variant="outlined" fullWidth sx={{ mt: 4 }}>Open talent intelligence</Button></Paper></Grid></Grid>
+  </Container>;
+}
+function Metric({ value, label, icon }: { value: number; label: string; icon: React.ReactNode }) { return <Grid item xs={12} sm={4}><Paper sx={{ p: 2.5, height: "100%" }}><Stack direction="row" justifyContent="space-between"><Typography variant="h2">{value}</Typography><Box sx={{ color: "primary.main" }}>{icon}</Box></Stack><Typography variant="overline" color="text.secondary">{label}</Typography></Paper></Grid>; }
